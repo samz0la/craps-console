@@ -8,17 +8,30 @@ import java.util.Stack;
 
 public class Game {
 
+  private final Object lock = new Object();
   private State state = State.COME_OUT;
   private int point;
   private Random rng;
   private List<Roll> rolls;
+  private int wins;
+  private int losses;
 
   public Game(Random rng) {
     this.rng = rng;
     rolls = new LinkedList<>();
+    wins = 0;
+    losses = 0;
   }
 
-  public State roll() {
+  public void reset() {
+    state = State.COME_OUT;
+    point = 0;
+    synchronized (lock) {
+      rolls.clear();
+    }
+  }
+
+  private State roll() {
     int[] dice = {
         1 + rng.nextInt(6),
         1 + rng.nextInt(6)
@@ -29,13 +42,21 @@ public class Game {
       point = total;
     }
     this.state = state;
-    rolls.add(new Roll(dice, state));
+    synchronized (lock) {
+      rolls.add(new Roll(dice, state));
+    }
     return state;
   }
 
   public State play() {
+    reset();
     while (state != State.WIN && state != State.LOSS) {
       roll();
+    }
+    if (state ==State.WIN) {
+      wins++;
+    }else {
+      losses++;
     }
     return state;
   }
@@ -45,21 +66,31 @@ public class Game {
   }
 
   public List<Roll> getRolls() {
-    return new LinkedList<>(rolls);
+    synchronized (lock) {
+      return new LinkedList<>(rolls);
+    }
   }
 
+  public int getWins() {
+    return wins;
+  }
+
+  public int getLosses() {
+    return losses;
+  }
 
   public static class Roll {
 
     private final int[] dice;
     private final State state;
 
-    public Roll(int[] dice, State state) {
+    private Roll(int[] dice, State state) {
       this.dice = Arrays.copyOf(dice,2);
       this.state = state;
     }
 
     public int[] getDice() {
+
       return Arrays.copyOf(dice, 2);
     }
 

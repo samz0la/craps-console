@@ -7,28 +7,26 @@ import java.util.Scanner;
 
 public class Main {
 
-  private int wins;
-  private int losses;
+
   private Random rng;
+  private Game game;
 
   public static void main(String[] args) {
-    new Main().run();
+    Main main = new Main();
+    if (args.length > 0) {
+      main.run(Integer.parseInt(args[0]));
+    } else {
+      main.run();
+    }
 
   }
   private Main () {
-    wins = 0;
-    losses = 0;
     rng = new SecureRandom();
+    game = new Game(rng);
   }
 
   private void play() {
-    Game game = new Game(rng);
-    Game.State state =game.play();
-    if (state == Game.State.WIN) {
-      wins++;
-    }else {
-      losses++;
-    }
+    game.play();
     for (Game.Roll roll : game.getRolls()) {
       System.out.print(roll);
     }
@@ -38,12 +36,22 @@ public class Main {
     try(Scanner scanner = new Scanner(System.in)) {
       do {
         play();
-        System.out.printf("Wins: %d; Losses: %d.%nPlay again?%n", wins, losses);
+        System.out.printf("Wins: %d; Losses: %d.%nPlay again?%n", game.getWins(), game.getLosses());
         String input = scanner.next().trim();
         if (!input.isEmpty() && input.toLowerCase().charAt(0) != 'y') {
           break;
         }
       }while (true);
     }
+  }
+  public void run(int trials) {
+    while (trials > 0) {
+      game.play();
+      trials--;
+    }
+    int wins = game.getWins();
+    int losses = game.getLosses();
+    double winPercent = 100.0 *wins / (wins + losses);
+    System.out.printf("Wins: %d; Losses: %d.%nWinning percentage = %f%%.%n", wins, losses, winPercent);
   }
 }
